@@ -1,9 +1,19 @@
+using Microsoft.EntityFrameworkCore;
+using query_ai.API.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Replace with your Render PostgreSQL connection string or use appsettings
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+                      ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+
+builder.Services.AddDbContext<QueryAiDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 var app = builder.Build();
 
@@ -18,6 +28,11 @@ if (app.Environment.IsDevelopment())
 
 
 app.MapGet("/", () => "🚀 QueryAI API is running!");
+
+
+// Basic GET endpoint to test database
+app.MapGet("/questions", async (QueryAiDbContext db) =>
+    await db.Questions.ToListAsync());
 
 
 var summaries = new[]
