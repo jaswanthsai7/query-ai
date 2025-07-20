@@ -2,12 +2,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-COPY *.sln .
-COPY query-ai.API/*.csproj ./query-ai.API/
+# Copy solution file
+COPY *.sln .                 
+# No subfolder - copy directly
+COPY *.csproj .             
+
 RUN dotnet restore
 
-COPY . .
-WORKDIR /app/query-ai.API
+# Copy the rest of the code
+COPY . .                     
 RUN dotnet publish -c Release -o /app/out
 
 # Runtime stage
