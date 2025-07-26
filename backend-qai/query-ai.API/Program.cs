@@ -58,6 +58,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Root Endpoint
-app.MapGet("/", () => "QueryAI API is running ??");
+app.MapGet("/", () => "QueryAI API is running");
 
 app.Run();

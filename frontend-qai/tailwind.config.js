@@ -11,16 +11,28 @@ export default {
         background: "rgb(var(--color-background) / <alpha-value>)",
         text: "rgb(var(--color-text) / <alpha-value>)",
         accent: "rgb(var(--color-accent) / <alpha-value>)",
-        
+
       },
       boxShadow: {
         smooth: "0 4px 14px rgba(0,0,0,0.08)",
       },
-      scrollbar: ['rounded'] 
+      scrollbar: ['rounded'],
+      animation: {
+        shimmer: 'shimmer 1.5s infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': {
+            transform: 'translateX(-100%)'
+          },
+          '100%': {
+            transform: 'translateX(100%)'
+          },
+        },
+      }
     },
   },
   plugins: [
     scrollbar,
   ],
 };
-

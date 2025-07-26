@@ -22,19 +22,14 @@ import {
 } from "lucide-react";
 import CustomDropdown from "../components/CustomDropdown";
 import newId from "../features/newId";
+import ShimmerLoader from "../features/ShimmerLoader";
 
-
-
-// API Base & Endpoints from .env
+// API Base & Endpoints
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 const API_GET_ALL = import.meta.env.VITE_API_GET_ALL;
 const API_CREATE = import.meta.env.VITE_API_CREATE;
 const API_UPDATE = import.meta.env.VITE_API_UPDATE;
 const API_DELETE = import.meta.env.VITE_API_DELETE;
-
-
-
-
 
 const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
   const toDateOnly = (d = new Date()) => d.toISOString().slice(0, 10);
@@ -47,13 +42,14 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
     CreatedAt: new Date().toISOString(),
     PaymentMethod: "",
     Notes: "",
-    UserId: "demo_user", // replace with real logged-in user
+    UserId: "demo_user",
   });
 
   const [expenses, setExpenses] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [rightLoading, setRightLoading] = useState(false);
 
   const categories = [
     "Food & Drinks",
@@ -77,20 +73,25 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
     "#ef4444",
   ];
 
-  // Fetch all expenses from API
-  const fetchExpenses = () => {
-    setLoading(true);
+  // Fetch all expenses
+  const fetchExpenses = (isInitial = false) => {
+    if (isInitial) setInitialLoading(true);
+    else setRightLoading(true);
+
     fetch(`${API_BASE}${API_GET_ALL}`, {
       headers: { "x-user-id": formData.UserId },
     })
       .then((res) => res.json())
       .then((data) => setExpenses(data))
       .catch((err) => console.error("Error fetching expenses:", err))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setInitialLoading(false);
+        setRightLoading(false);
+      });
   };
 
   useEffect(() => {
-    fetchExpenses();
+    fetchExpenses(true);
   }, []);
 
   const validate = () => {
@@ -130,7 +131,7 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
       });
 
       if (res.ok) {
-        fetchExpenses();
+        fetchExpenses(false);
         setEditingId(null);
         resetForm();
       } else {
@@ -147,7 +148,7 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
         alert("Failed to add expense");
       } else {
         await res.json();
-        fetchExpenses();
+        fetchExpenses(false);
       }
       resetForm();
     }
@@ -166,11 +167,12 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
   };
 
   const handleDelete = async (ExpenseId) => {
+    setRightLoading(true);
     await fetch(`${API_BASE}${API_DELETE}/${ExpenseId}`, {
       method: "DELETE",
       headers: { "x-user-id": formData.UserId },
     });
-    fetchExpenses();
+    fetchExpenses(false);
     if (editingId === ExpenseId) {
       setEditingId(null);
       resetForm();
@@ -204,94 +206,109 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
     return Object.keys(dateMap).map((date) => ({ date, total: dateMap[date] }));
   }, [expenses]);
 
-
   return (
-    <div className="relative h-[calc(100vh-128px)] bg-gradient-to-br overflow-hidden p-6">
+    <div className="relative min-h-[calc(100vh-128px)] bg-gradient-to-br p-4 md:p-6 overflow-x-hidden overflow-y-auto">
       <div className="relative flex flex-col md:flex-row gap-6 z-10 h-full">
         {/* LEFT FORM */}
         <form
           onSubmit={handleAddExpense}
-          className="w-full md:w-1/3 bg-white/15 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-white/30 hover:shadow-2xl transition flex flex-col justify-between"
+          className="w-full md:w-1/3 bg-white/15 backdrop-blur-md rounded-3xl shadow-lg p-4 md:p-6 border border-white/30 hover:shadow-2xl transition flex flex-col justify-between"
         >
-          <div>
-            <h2 className="text-2xl font-extrabold text-white text-center mb-6 tracking-tight">
-              {editingId ? "Edit Expense" : "Add Expense"}
-            </h2>
+          {initialLoading ? (
             <div className="space-y-4">
-              <CustomDropdown
-                label="Category"
-                icon={Wallet}
-                value={formData.Category}
-                options={categories}
-                onChange={(val) => setFormData({ ...formData, Category: val })}
-              />
-              {errors.Category && <p className="text-red-300 text-xs">{errors.Category}</p>}
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">Amount (₹)</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={formData.Amount}
-                  onChange={(e) => setFormData({ ...formData, Amount: e.target.value })}
-                  placeholder="Enter Amount"
-                  className="w-full px-4 py-2 rounded-full border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition"
-                />
-                {errors.Amount && <p className="text-red-300 text-xs">{errors.Amount}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1 flex items-center gap-2">
-                  <Calendar size={18} /> Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.EntryDate}
-                  onChange={(e) => setFormData({ ...formData, EntryDate: e.target.value })}
-                  className="w-full px-4 py-2 rounded-full border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition [color-scheme:dark]"
-                />
-                {errors.EntryDate && <p className="text-red-300 text-xs">{errors.EntryDate}</p>}
-              </div>
-
-              <CustomDropdown
-                label="Payment Method"
-                icon={CreditCard}
-                value={formData.PaymentMethod}
-                options={paymentMethods}
-                onChange={(val) => setFormData({ ...formData, PaymentMethod: val })}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1 flex items-center gap-2">
-                  <FileText size={18} /> Notes
-                </label>
-                <textarea
-                  value={formData.Notes}
-                  onChange={(e) => setFormData({ ...formData, Notes: e.target.value })}
-                  placeholder="Add details..."
-                  rows="2"
-                  className="w-full px-4 py-2 rounded-2xl border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition"
-                />
-              </div>
+              <ShimmerLoader className="h-6 w-2/3 mx-auto" />
+              <ShimmerLoader className="h-10 w-full rounded-full" />
+              <ShimmerLoader className="h-10 w-full rounded-full" />
+              <ShimmerLoader className="h-20 w-full rounded-2xl" />
+              <ShimmerLoader className="h-10 w-full rounded-full" />
             </div>
-          </div>
-          <button
-            type="submit"
-            className={`mt-4 w-full py-2 rounded-full font-semibold text-white bg-gradient-to-r ${gradient} shadow-lg hover:scale-105 transition-transform duration-300`}
-          >
-            {editingId ? "Update Expense" : "Add Expense"}
-          </button>
+          ) : (
+            <>
+              <div>
+                <h2 className="text-2xl font-extrabold text-white text-center mb-6 tracking-tight">
+                  {editingId ? "Edit Expense" : "Add Expense"}
+                </h2>
+                <div className="space-y-4">
+                  <CustomDropdown
+                    label="Category"
+                    icon={Wallet}
+                    value={formData.Category}
+                    options={categories}
+                    onChange={(val) => setFormData({ ...formData, Category: val })}
+                  />
+                  {errors.Category && <p className="text-red-300 text-xs">{errors.Category}</p>}
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Amount (₹)</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={formData.Amount}
+                      onChange={(e) => setFormData({ ...formData, Amount: e.target.value })}
+                      placeholder="Enter Amount"
+                      className="w-full px-4 py-2 rounded-full border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition"
+                    />
+                    {errors.Amount && <p className="text-red-300 text-xs">{errors.Amount}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1 flex items-center gap-2">
+                      <Calendar size={18} /> Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.EntryDate}
+                      onChange={(e) => setFormData({ ...formData, EntryDate: e.target.value })}
+                      className="w-full px-4 py-2 rounded-full border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition [color-scheme:dark]"
+                    />
+                    {errors.EntryDate && <p className="text-red-300 text-xs">{errors.EntryDate}</p>}
+                  </div>
+
+                  <CustomDropdown
+                    label="Payment Method"
+                    icon={CreditCard}
+                    value={formData.PaymentMethod}
+                    options={paymentMethods}
+                    onChange={(val) => setFormData({ ...formData, PaymentMethod: val })}
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1 flex items-center gap-2">
+                      <FileText size={18} /> Notes
+                    </label>
+                    <textarea
+                      value={formData.Notes}
+                      onChange={(e) => setFormData({ ...formData, Notes: e.target.value })}
+                      placeholder="Add details..."
+                      rows="2"
+                      className="w-full px-4 py-2 rounded-2xl border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition"
+                    />
+                  </div>
+                </div>
+              </div>
+              <button
+                type="submit"
+                className={`mt-4 w-full py-2 rounded-full font-semibold text-white bg-gradient-to-r ${gradient} shadow-lg hover:scale-105 transition-transform duration-300`}
+              >
+                {editingId ? "Update Expense" : "Add Expense"}
+              </button>
+            </>
+          )}
         </form>
 
         {/* RIGHT GRID + CHART */}
-        <div className="w-full md:w-2/3 bg-white/15 backdrop-blur-md rounded-3xl shadow-lg p-6 border border-white/30 hover:shadow-2xl transition flex flex-col">
+        <div className="w-full md:w-2/3 bg-white/15 backdrop-blur-md rounded-3xl shadow-lg p-4 md:p-6 border border-white/30 hover:shadow-2xl transition flex flex-col">
           <h2 className="text-2xl font-bold text-white mb-4">Expense Breakdown</h2>
-          {loading ? (
-            <p className="text-white/70 text-center py-10">Loading...</p>
+          <div className="text-right text-white font-bold mt-4 ml-4">Total: ₹{totalExpense}</div>
+          {(initialLoading || rightLoading) ? (
+            <div className="space-y-4">
+              <ShimmerLoader className="h-6 w-1/3" />
+              <ShimmerLoader className="h-40 w-full" />
+            </div>
           ) : chartData.length === 0 ? (
             <p className="text-white/70 text-center py-10">No data to display.</p>
           ) : (
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4 w-full">
               <div className="w-full md:w-1/3 h-40">
                 <ResponsiveContainer>
                   <PieChart>
@@ -328,12 +345,18 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
           )}
 
           <h2 className="text-2xl font-bold text-white mb-4 mt-4">Expenses List</h2>
-          {expenses.length === 0 ? (
+          {(initialLoading || rightLoading) ? (
+            <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+              {[...Array(3)].map((_, i) => (
+                <ShimmerLoader key={i} className="h-20 w-full rounded-2xl" />
+              ))}
+            </div>
+          ) : expenses.length === 0 ? (
             <p className="text-white/70 text-center py-10">No expenses added yet.</p>
           ) : (
-            <div className="space-y-3 flex-1 overflow-y-auto pr-2">
+            <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
               {expenses.map((exp) => (
-                <div key={exp.ExpenseId} className="flex justify-between items-center p-4 bg-white/10 rounded-2xl shadow-md">
+                <div key={exp.ExpenseId} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white/10 rounded-2xl shadow-md">
                   <div>
                     <p className="text-white font-semibold">{exp.Category}</p>
                     <p className="text-white/70 text-sm">{exp.Notes}</p>
@@ -343,7 +366,7 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                         : new Date(exp.CreatedAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 mt-2 sm:mt-0">
                     <p className="text-white font-bold">₹{exp.Amount}</p>
                     <button onClick={() => handleEdit(exp.ExpenseId)} className="text-white/70 hover:text-white" title="Edit">
                       <Edit3 size={18} />
@@ -354,7 +377,6 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                   </div>
                 </div>
               ))}
-              <div className="text-right text-white font-bold mt-4">Total: ₹{totalExpense}</div>
             </div>
           )}
         </div>

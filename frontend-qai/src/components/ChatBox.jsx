@@ -15,7 +15,6 @@ const ChatBox = () => {
     setMessages((prev) => [...prev, { type: "user", text: input }]);
     setInput("");
 
-    // Show typing indicator
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
@@ -35,8 +34,8 @@ const ChatBox = () => {
         Query AI
       </div>
 
-      {/* Chat Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
         {messages.map((msg, index) => (
           <div
             key={index}
