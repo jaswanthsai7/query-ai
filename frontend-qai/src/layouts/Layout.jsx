@@ -9,9 +9,9 @@ export default function Layout() {
       <TopNavbar />
 
       {/* Main Content Area (Scrollable inside) */}
-     <main className="flex-1 overflow-y-auto pt-16 pb-16">
-  <Outlet />
-</main>
+      <main className="flex-1 overflow-y-auto pt-16 pb-16">
+        <Outlet />
+      </main>
 
 
       <BottomNavbar />

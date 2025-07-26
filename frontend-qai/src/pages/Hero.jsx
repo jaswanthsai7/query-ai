@@ -97,7 +97,7 @@ export default function Hero() {
                        hover:bg-white/30 hover:scale-105 transition-transform duration-300 shadow-lg
                        backdrop-blur-md"
           >
-          Get Started
+            Get Started
           </button>
         </div>
       </div>
