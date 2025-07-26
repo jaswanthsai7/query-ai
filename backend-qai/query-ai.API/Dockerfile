@@ -1,21 +1,24 @@
-# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-# Copy entire source code (preserves folders & all files)
+# Copy solution and project files with relative paths
+COPY query-ai.API/*.sln ./query-ai.API/
+COPY query-ai.API/*.csproj ./query-ai.API/
+COPY query-ai.Gemini/*.csproj ./query-ai.Gemini/
+
+# Restore using the solution file inside query-ai.API folder
+WORKDIR /app/query-ai.API
+RUN dotnet restore query-ai.API.sln
+
+# Copy all source code
 COPY . .
 
-# Restore all projects using the solution file
-RUN dotnet restore
+# Build and publish
+RUN dotnet publish query-ai.API.sln -c Release -o /app/out
 
-# Build and publish the app in Release configuration
-RUN dotnet publish -c Release -o /app/out
-
-# Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
-# Copy published files from build stage
 COPY --from=build /app/out .
 
 ENV ASPNETCORE_URLS=http://+:8080
