@@ -88,5 +88,15 @@ namespace query_ai.API.Repositories
 
             return rows > 0;
         }
+
+        public async Task<List<Expense>> RunSqlQueryAsync(string sql)
+        {
+            // IMPORTANT: Ensure sql is safe SELECT only before calling this!
+            // You could add simple validation here or in the service layer.
+
+            return await _context.Expenses
+                .FromSqlRaw(sql)
+                .ToListAsync();
+        }
     }
 }

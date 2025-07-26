@@ -23,4 +23,8 @@
     <Folder Include="Exceptions\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\query-ai.Gemini\query-ai.Gemini.csproj" />
+  </ItemGroup>
+
 </Project>

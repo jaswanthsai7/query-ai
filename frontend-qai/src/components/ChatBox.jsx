@@ -2,27 +2,51 @@ import { useState } from "react";
 import { Send, Bot } from "lucide-react";
 import theme from "../constants/theme";
 
-const ChatBox = () => {
+const ChatBox = ({ onData }) => {
   const [messages, setMessages] = useState([
     { type: "bot", text: "Hello! How can I assist you today?" },
-    { type: "user", text: "Show me my expenses." },
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
-    setMessages((prev) => [...prev, { type: "user", text: input }]);
-    setInput("");
+    const userMessage = input.trim();
 
+    // Append user message
+    setMessages((prev) => [...prev, { type: "user", text: userMessage }]);
+    setInput("");
     setIsTyping(true);
-    setTimeout(() => {
+
+    try {
+      const res = await fetch("https://localhost:7199/api/aichat/get-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage, userId: "demo_user" }),
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch");
+
+      const json = await res.json();
+      const chatMessage = json.ChatMessage ?? "Sorry, no reply.";
+      const data = json.Data ?? [];
+
+      // Simulate typing delay
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages((prev) => [...prev, { type: "bot", text: chatMessage }]);
+
+        // Pass the expense data back to parent
+        if (onData) onData(data);
+      }, 1000);
+    } catch (error) {
       setIsTyping(false);
       setMessages((prev) => [
         ...prev,
-        { type: "bot", text: "Fetching your expenses..." },
+        { type: "bot", text: "Sorry, something went wrong. Please try again." },
       ]);
-    }, 1500);
+      if (onData) onData([]);
+    }
   };
 
   return (
@@ -83,6 +107,9 @@ const ChatBox = () => {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
           className="flex-1 px-4 py-3 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-pink-300"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") sendMessage();
+          }}
         />
         <button
           onClick={sendMessage}

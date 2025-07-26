@@ -1,9 +1,19 @@
-const TableGrid = () => {
-  const data = [
-    { category: "Food", amount: "$120", date: "2025-07-20" },
-    { category: "Transport", amount: "$50", date: "2025-07-21" },
-    { category: "Shopping", amount: "$200", date: "2025-07-22" },
-  ];
+const TableGrid = ({ data }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="text-white text-center py-10">
+        No expense data to display.
+      </div>
+    );
+  }
+
+  // Columns to exclude from display
+  const excludedColumns = ["Id", "expenseid", "userId"];
+
+  // Extract column keys dynamically, excluding those columns
+  const columns = Array.from(
+    new Set(data.flatMap(row => Object.keys(row)))
+  ).filter(col => !excludedColumns.includes(col));
 
   return (
     <div className="h-full flex flex-col">
@@ -12,20 +22,46 @@ const TableGrid = () => {
         <table className="w-full rounded-lg overflow-hidden text-left border border-white/20">
           <thead className="bg-white/10 text-white/80 sticky top-0 z-10">
             <tr>
-              <th className="p-3">Category</th>
-              <th className="p-3">Amount</th>
-              <th className="p-3">Date</th>
+              {columns.map(col => (
+                <th key={col} className="p-3 capitalize">{col}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {data.map((row, index) => (
+            {data.map((row, rowIndex) => (
               <tr
-                key={index}
+                key={rowIndex}
                 className="hover:bg-white/10 transition-colors border-b border-white/10"
               >
-                <td className="p-3">{row.category}</td>
-                <td className="p-3">{row.amount}</td>
-                <td className="p-3">{row.date}</td>
+                {columns.map(col => {
+                  let value = row[col];
+
+                  // Format date fields (strings containing "date" or "createdat") as yyyy-MM-dd
+                  if (
+                    value &&
+                    typeof value === "string" &&
+                    (col.toLowerCase().includes("date") || col.toLowerCase().includes("createdat"))
+                  ) {
+                    const dt = new Date(value);
+                    if (!isNaN(dt)) {
+                      const year = dt.getFullYear();
+                      const month = (dt.getMonth() + 1).toString().padStart(2, "0");
+                      const day = dt.getDate().toString().padStart(2, "0");
+                      value = `${year}-${month}-${day}`;
+                    }
+                  }
+
+                  // Format amount fields as currency
+                  if (col.toLowerCase().includes("amount") && typeof value === "number") {
+                    value = `$${value.toFixed(2)}`;
+                  }
+
+                  return (
+                    <td key={col} className="p-3">
+                      {value?.toString() ?? ""}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

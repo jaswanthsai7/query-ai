@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using query_ai.API.Data;
+using query_ai.API.Middlewares;
 using query_ai.API.Repositories;
 using query_ai.API.Services;
-using query_ai.API.Middlewares;
+using query_ai.Gemini.Integration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,12 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Gemini settings from appsettings.json
+builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
+
+// Register GeminiClient
+builder.Services.AddHttpClient<IGeminiClient, GeminiClient>();
+
 // DB Connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                       ?? Environment.GetEnvironmentVariable("DATABASE_URL");
@@ -37,8 +44,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<QueryAiDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+// Repositories and Services
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<IChatService, ChatService>(); // <--- Register ChatService
 
 var app = builder.Build();
 app.UseCors("AllowFrontend");
@@ -54,10 +63,8 @@ app.UseMiddleware<ApiExceptionMiddleware>();
 // app.UseHttpsRedirection();
 app.UseAuthorization();
 
-// API Controllers
 app.MapControllers();
 
-// Root Endpoint
 app.MapGet("/", () => "QueryAI API is running");
 
 app.Run();

@@ -31,5 +31,7 @@ namespace query_ai.API.Repositories
         Task<bool> UpdateAsync(Expense expense, CancellationToken ct = default);
         Task<bool> DeleteAsync(string userId, Guid expenseId, CancellationToken ct = default);
         Task<bool> ExistsAsync(string userId, Guid expenseId, CancellationToken ct = default);
+        Task<List<Expense>> RunSqlQueryAsync(string sql);
+
     }
 }
