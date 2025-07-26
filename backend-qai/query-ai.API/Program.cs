@@ -13,7 +13,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173", "https://query-ai-812b.onrender.com/", "https://vercel.com/")
+            policy.WithOrigins("http://localhost:5173", "https://query-ai-812b.onrender.com", "https://vercel.com")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -31,40 +31,42 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Gemini settings from appsettings.json
+// Gemini settings
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
 
-// Register GeminiClient
+// Gemini Client
 builder.Services.AddHttpClient<IGeminiClient, GeminiClient>();
 
-// DB Connection
+// Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                       ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
 builder.Services.AddDbContext<QueryAiDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Repositories and Services
+// Repositories & Services
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
-builder.Services.AddScoped<IChatService, ChatService>(); // <--- Register ChatService
+builder.Services.AddScoped<IChatService, ChatService>();
 
 var app = builder.Build();
 app.UseCors("AllowFrontend");
 
-if (app.Environment.IsDevelopment())
+// Always enable Swagger
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "QueryAI API V1");
+    c.RoutePrefix = string.Empty; // Swagger UI opens at "/"
+});
 
 app.UseMiddleware<ApiExceptionMiddleware>();
 
-// app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/", () => "QueryAI API is running");
+// Optional: Root message if Swagger UI is disabled
+// app.MapGet("/", () => "QueryAI API is running");
 
 app.Run();
