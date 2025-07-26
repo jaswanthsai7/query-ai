@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Send, Bot } from "lucide-react";
 import theme from "../constants/theme";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_AI_CHAT = import.meta.env.VITE_API_AI_CHAT;
 const ChatBox = ({ onData }) => {
   const [messages, setMessages] = useState([
     { type: "bot", text: "Hello! How can I assist you today?" },
@@ -19,7 +21,7 @@ const ChatBox = ({ onData }) => {
     setIsTyping(true);
 
     try {
-      const res = await fetch("https://localhost:7199/api/aichat/get-data", {
+      const res = await fetch(`${API_BASE}${API_AI_CHAT}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage, userId: "demo_user" }),
