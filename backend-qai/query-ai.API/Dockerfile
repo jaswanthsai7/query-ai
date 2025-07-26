@@ -4,13 +4,15 @@ WORKDIR /app
 
 # Copy solution file
 COPY *.sln .                 
-# No subfolder - copy directly
-COPY *.csproj .             
+
+# Copy all csproj files including subfolders
+COPY **/*.csproj .           
 
 RUN dotnet restore
 
 # Copy the rest of the code
 COPY . .                     
+
 RUN dotnet publish -c Release -o /app/out
 
 # Runtime stage
