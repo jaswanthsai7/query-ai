@@ -1,6 +1,6 @@
 const theme = {
-    gradient: "from-[#1a2a6c] via-[#b21f1f] to-[#fdbb2d]",
-    gradientchat: "from-[#b21f1f] to-[#1a2a6c]",
+  gradient: "from-[#1a2a6c] via-[#b21f1f] to-[#fdbb2d]",
+  gradientchat: "from-[#b21f1f] to-[#1a2a6c]",
 };
 
 const themesalist = {
