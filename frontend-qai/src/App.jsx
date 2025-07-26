@@ -12,7 +12,7 @@ export default function App() {
         <Route index element={<Hero />} />
         <Route path="AIChatPage" element={<AIChatPage />} />
         <Route path="SpendAnalysis" element={<SpendAnalysis />} />
-         <Route path="FillExpenses" element={<FillExpenses />} /> 
+        <Route path="FillExpenses" element={<FillExpenses />} />
       </Route>
     </Routes>
   );

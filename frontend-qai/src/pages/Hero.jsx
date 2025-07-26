@@ -1,25 +1,89 @@
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import theme from "../constants/theme";
+
 export default function Hero() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
+  const [displayText, setDisplayText] = useState("");
+  const typingRef = useRef(null); // keep interval id safe
+
+  const mainText = "Master Your Finances";
+
+  useEffect(() => {
+    const heroTimer = setTimeout(() => setLoading(false), 1000);
+    const redirectTimer = setTimeout(() => {
+      setRedirecting(true);
+      setTimeout(() => navigate("/AIChatPage"), 800);
+    }, 4000);
+
+    return () => {
+      clearTimeout(heroTimer);
+      clearTimeout(redirectTimer);
+      if (typingRef.current) clearInterval(typingRef.current);
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!loading) {
+      setDisplayText("");
+      let i = 0;
+
+      typingRef.current = window.setInterval(() => {
+        if (i < mainText.length) {
+          // safer: slice avoids ever reading undefined
+          setDisplayText(mainText.slice(0, i + 1));
+          i++;
+        } else {
+          if (typingRef.current) {
+            clearInterval(typingRef.current);
+            typingRef.current = null;
+          }
+        }
+      }, 100);
+
+      return () => {
+        if (typingRef.current) {
+          clearInterval(typingRef.current);
+          typingRef.current = null;
+        }
+      };
+    }
+  }, [loading, mainText]);
+
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center h-screen bg-gradient-to-br ${theme.gradient}`}>
+        <div className="loader-custom"></div>
+      </div>
+    );
+  }
+
   return (
     <section
-      class="relative flex items-center justify-center text-center 
+      className={`relative flex items-center justify-center text-center 
          min-h-[calc(100vh-8rem)] 
-         bg-gradient-to-br from-[var(--from)] via-[var(--via)] to-[var(--to)] 
-         overflow-hidden rounded-3xl mx-5"
+         bg-gradient-to-br ${theme.gradient}
+         overflow-hidden rounded-3xl mx-5 transition-opacity duration-1000
+         ${redirecting ? "opacity-0" : "opacity-100"} animate-fade-in`}
     >
-      {/* Decorative Floating Blobs */}
-      <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px]"></div>
-      <div className="absolute -bottom-32 -right-32 w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px]"></div>
+      {/* Galaxy Particle Effect */}
+      <div className="galaxy-stars"></div>
+      <div className="galaxy-stars galaxy-stars2"></div>
+      <div className="galaxy-stars galaxy-stars3"></div>
+      <div className="twinkling"></div>
 
-      {/* Content with Side Gaps */}
+      {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12 text-white">
-        <h1 class="text-5xl md:text-6xl font-extrabold leading-tight 
+        <h1
+          className={`text-5xl md:text-6xl font-extrabold leading-tight 
            tracking-wider drop-shadow-[0_0_25px_rgba(255,255,255,0.4)]
-           bg-gradient-to-r from-yellow-300 via-white to-yellow-100 
-           bg-clip-text text-transparent animate-gradient">
-          Master Your
-          <span class="bg-gradient-to-r from-pink-300 via-yellow-200 to-pink-100 bg-clip-text text-transparent">
-            Finances
-          </span>
+           bg-gradient-to-r ${theme.gradientchat}
+           bg-clip-text text-transparent`}
+        >
+          {displayText}
+          <span className="animate-blink">|</span>
         </h1>
 
         <p className="mt-6 text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed 
@@ -27,29 +91,15 @@ export default function Hero() {
           A modern platform to track, analyze, and optimize your expenses—designed for simplicity and insight.
         </p>
 
-        {/* CTA Buttons */}
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <button
             className="px-8 py-3 rounded-full font-semibold text-white bg-white/20 border border-white/30
                        hover:bg-white/30 hover:scale-105 transition-transform duration-300 shadow-lg
                        backdrop-blur-md"
           >
-            Get Started
+          Get Started
           </button>
         </div>
-      </div>
-
-      {/* Subtle Divider */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg
-          className="w-full h-24 text-pink-400/40"
-          preserveAspectRatio="none"
-          viewBox="0 0 1200 120"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="currentColor"
-        >
-          <path d="M0,0V46.29c47.79,22,103.74,29,158,17.39,70.36-15.48,136.88-57.69,207-57.69,66.92,0,130.33,40.8,196,54.48,69.37,14.55,136.62-4.75,201-24.44,56.4-17.41,111.15-39.35,167-37.3,74.74,2.85,138.58,44.48,206,69.26,53.93,20.39,108,22.19,161,0V0Z"></path>
-        </svg>
       </div>
     </section>
   );

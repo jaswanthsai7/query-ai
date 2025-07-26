@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using query_ai.API.Data;
@@ -11,9 +12,11 @@ using query_ai.API.Data;
 namespace query_ai.API.Migrations
 {
     [DbContext(typeof(QueryAiDbContext))]
-    partial class QueryAiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250726080006_AddExpensesTable")]
+    partial class AddExpensesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

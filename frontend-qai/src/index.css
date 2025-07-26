@@ -73,3 +73,126 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
 }
+
+/* Remove number input spinners (Chrome, Safari, Edge, Opera) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove number input spinners (Firefox) */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+/* Loader Screen */
+.hero-loader-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: radial-gradient(circle at top, #1e1e2f, #0d0d16);
+  animation: fadeIn 1s ease forwards;
+}
+
+/* Loader */
+.loader-custom {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 6px solid transparent;
+  border-top: 6px solid #fff;
+  border-right: 6px solid #ffcc00;
+  animation: spin 1.2s linear infinite, glow 2s ease-in-out infinite alternate;
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  min-height: calc(100vh - 8rem);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  margin: 0 1rem;
+  background: radial-gradient(circle at top left, #1e1e2f, #0d0d16);
+  animation: fadeIn 1.2s ease forwards;
+}
+
+.hero-section.fade-out {
+  animation: fadeOut 0.8s ease forwards;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #ffe259, #fff, #ffe259);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.hero-subtitle {
+  margin-top: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 1.25rem;
+}
+
+.hero-button {
+  padding: 0.75rem 2rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  font-weight: 600;
+  color: #fff;
+  backdrop-filter: blur(8px);
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.hero-button:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Galaxy & Twinkling */
+.galaxy-stars, .galaxy-stars2, .galaxy-stars3 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: transparent url("https://www.transparenttextures.com/patterns/stardust.png") repeat;
+  z-index: 1;
+}
+
+.galaxy-stars {
+  animation: moveStars 100s linear infinite;
+}
+.galaxy-stars2 {
+  animation: moveStars 200s linear infinite;
+  opacity: 0.5;
+}
+.galaxy-stars3 {
+  animation: moveStars 300s linear infinite;
+  opacity: 0.3;
+}
+
+/* Twinkling Stars Layer */
+.twinkling {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: transparent url("https://www.transparenttextures.com/patterns/tiny-cross.png") repeat;
+  animation: twinkle 2s ease-in-out infinite alternate;
+  opacity: 0.2;
+  z-index: 2;
+}
+
+/* Animations */
+@keyframes spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+@keyframes glow { 0% { box-shadow: 0 0 5px #fff, 0 0 10px #ffcc00; } 100% { box-shadow: 0 0 20px #fff, 0 0 30px #ffcc00; } }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+@keyframes moveStars { from { background-position: 0 0; } to { background-position: -10000px 10000px; } }
+@keyframes twinkle { from { opacity: 0.1; } to { opacity: 0.4; } }
+.animate-blink { animation: blink 1s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }

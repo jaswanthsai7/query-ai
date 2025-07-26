@@ -1,63 +1,61 @@
 using Microsoft.EntityFrameworkCore;
 using query_ai.API.Data;
+using query_ai.API.Repositories;
+using query_ai.API.Services;
+using query_ai.API.Middlewares; // for ApiExceptionMiddleware
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // React Dev Server
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+// Add Controllers
+builder.Services.AddControllers()
+                .AddJsonOptions(opt =>
+                {
+                    // Keep property names as defined (camelCase from JsonPropertyName)
+                    opt.JsonSerializerOptions.PropertyNamingPolicy = null;
+                });
+
+// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Replace with your Render PostgreSQL connection string or use appsettings
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+// PostgreSQL connection
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                       ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
 builder.Services.AddDbContext<QueryAiDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-var app = builder.Build();
+// Dependency Injection for Repositories and Services
+builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
 
-// Configure the HTTP request pipeline.
+var app = builder.Build();
+app.UseCors("AllowFrontend");
+// Enable Swagger in Development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+// Global Exception Handling Middleware
+app.UseMiddleware<ApiExceptionMiddleware>();
 
+// app.UseHttpsRedirection();  // Uncomment if using HTTPS
+app.UseAuthorization();
 
-app.MapGet("/", () => "🚀 QueryAI API is running!");
-
-
-// Basic GET endpoint to test database
-app.MapGet("/questions", async (QueryAiDbContext db) =>
-    await db.Questions.ToListAsync());
-
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+// Map Controllers
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
