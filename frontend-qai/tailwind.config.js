@@ -1,5 +1,7 @@
+import scrollbar from 'tailwind-scrollbar';
+
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
@@ -9,11 +11,16 @@ module.exports = {
         background: "rgb(var(--color-background) / <alpha-value>)",
         text: "rgb(var(--color-text) / <alpha-value>)",
         accent: "rgb(var(--color-accent) / <alpha-value>)",
+        
       },
       boxShadow: {
         smooth: "0 4px 14px rgba(0,0,0,0.08)",
       },
+      scrollbar: ['rounded'] 
     },
   },
-  plugins: [],
+  plugins: [
+    scrollbar,
+  ],
 };
+
