@@ -25,6 +25,7 @@ import newId from "../features/newId";
 import ShimmerLoader from "../features/ShimmerLoader";
 import theme from "../constants/theme";
 import { useAuth } from "../context/AuthContext";
+import apiTrailRemover from "../features/apiTrailRemover";
 
 // API Base & Endpoints
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -88,7 +89,7 @@ const FillExpenses = () => {
       if (isInitial) setInitialLoading(true);
       else setRightLoading(true);
 
-      const response = await fetch(`${API_BASE}${API_GET_ALL}`, {
+      const response = await fetch(apiTrailRemover(API_BASE, API_GET_ALL), {
         headers: {
           "x-user-id": formData.UserId,
           Authorization: `Bearer ${token}`,
@@ -147,7 +148,7 @@ const FillExpenses = () => {
     };
 
     if (editingId) {
-      const res = await fetch(`${API_BASE}${API_UPDATE}/${formData.ExpenseId}`, {
+      const res = await fetch(apiTrailRemover(API_BASE, API_UPDATE + "/" + formData.ExpenseId), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -165,7 +166,7 @@ const FillExpenses = () => {
         alert("Failed to update expense");
       }
     } else {
-      const res = await fetch(`${API_BASE}${API_CREATE}`, {
+      const res = await fetch(apiTrailRemover(API_BASE, API_CREATE), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -207,7 +208,7 @@ const FillExpenses = () => {
 
   const handleDelete = async (ExpenseId) => {
     setRightLoading(true);
-    await fetch(`${API_BASE}${API_DELETE}/${ExpenseId}`, {
+    await fetch(apiTrailRemover(API_BASE, API_DELETE + `/${ExpenseId}`), {
       method: "DELETE",
       headers: {
         "x-user-id": formData.UserId,

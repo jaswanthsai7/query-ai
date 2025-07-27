@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Bot } from "lucide-react";
 import theme from "../constants/theme";
 import { useAuth } from "../context/AuthContext";
+import apiTrailRemover from "../features/apiTrailRemover";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 const API_AI_CHAT = import.meta.env.VITE_API_AI_CHAT;
@@ -103,7 +104,7 @@ const ChatBox = ({ onData }) => {
     });
 
     try {
-      const res = await fetch(`${API_BASE}${API_AI_CHAT}`, {
+      const res = await fetch(apiTrailRemover(API_BASE,API_AI_CHAT), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
