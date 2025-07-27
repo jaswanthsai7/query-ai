@@ -7,16 +7,16 @@ export default function Hero() {
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
   const [displayText, setDisplayText] = useState("");
-  const typingRef = useRef(null); // keep interval id safe
+  const typingRef = useRef(null);
 
-  const mainText = "Master Your Finances";
+  const mainText = "Master Your Expenses with AI";
 
   useEffect(() => {
     const heroTimer = setTimeout(() => setLoading(false), 1000);
     const redirectTimer = setTimeout(() => {
       setRedirecting(true);
       setTimeout(() => navigate("/AIChatPage"), 800);
-    }, 4000);
+    }, 5000);
 
     return () => {
       clearTimeout(heroTimer);
@@ -32,14 +32,11 @@ export default function Hero() {
 
       typingRef.current = window.setInterval(() => {
         if (i < mainText.length) {
-          // safer: slice avoids ever reading undefined
           setDisplayText(mainText.slice(0, i + 1));
           i++;
         } else {
-          if (typingRef.current) {
-            clearInterval(typingRef.current);
-            typingRef.current = null;
-          }
+          clearInterval(typingRef.current);
+          typingRef.current = null;
         }
       }, 100);
 
@@ -86,9 +83,14 @@ export default function Hero() {
           <span className="animate-blink">|</span>
         </h1>
 
-        <p className="mt-6 text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed 
-                      [text-shadow:0_1px_6px_rgba(0,0,0,0.25)]">
-          A modern platform to track, analyze, and optimize your expenses—designed for simplicity and insight.
+        <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed 
+  bg-gradient-to-r from-purple-200 via-pink-200 to-blue-200
+  bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(255,255,255,0.3)]
+">
+          QueryAI is your intelligent data assistant, combining AI-powered SQL generation,
+          real-time analysis, and interactive visualizations. With Gemini integration,
+          it helps you explore datasets, uncover trends, and turn raw numbers into actionable insights
+          — all with a single query.
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">

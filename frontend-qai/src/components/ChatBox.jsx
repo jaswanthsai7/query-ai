@@ -1,30 +1,115 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Send, Bot } from "lucide-react";
 import theme from "../constants/theme";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 const API_AI_CHAT = import.meta.env.VITE_API_AI_CHAT;
-const ChatBox = ({ onData }) => {
-  const [messages, setMessages] = useState([
-    { type: "bot", text: "Hello! How can I assist you today?" },
-  ]);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
 
+const ChatBox = ({ onData }) => {
+  const { token, userId } = useAuth();
+
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+
+  const typingTimeoutRef = useRef(null);
+  const typingIndexRef = useRef(0);
+
+  const messagesEndRef = useRef(null);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  /** Show typing bubble (dots) if not already present */
+  const showTypingBubble = () => {
+    setMessages((prev) =>
+      prev.some((m) => m.type === "bot" && m.isTyping)
+        ? prev
+        : [...prev, { type: "bot", text: "", isTyping: true }]
+    );
+  };
+
+  /** Typewriter effect */
+  const typeMessage = (fullText) => {
+    // Ensure typing bubble exists
+    setMessages((prev) => {
+      if (!prev.some((m) => m.type === "bot" && m.isTyping)) {
+        return [...prev, { type: "bot", text: "", isTyping: true }];
+      }
+      return prev;
+    });
+
+    typingIndexRef.current = 0;
+    clearTimeout(typingTimeoutRef.current);
+
+    const typeNextChar = () => {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.type === "bot" && msg.isTyping) {
+            const currentIndex = typingIndexRef.current;
+            const isDone = currentIndex + 1 >= fullText.length;
+            return {
+              type: "bot",
+              text: fullText.slice(0, currentIndex + 1),
+              isTyping: !isDone,
+            };
+          }
+          return msg;
+        })
+      );
+
+      if (typingIndexRef.current < fullText.length - 1) {
+        typingIndexRef.current++;
+        typingTimeoutRef.current = setTimeout(typeNextChar, 40);
+      }
+    };
+
+    typeNextChar();
+  };
+
+  /** On mount: show initial bot typing animation */
+  useEffect(() => {
+    let cancelled = false;
+
+    setMessages([]); // Clear old bubbles
+    showTypingBubble();
+
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        typeMessage("Hello! How can I assist you today?");
+      }
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
+
+  /** Send user message */
   const sendMessage = async () => {
     if (!input.trim()) return;
     const userMessage = input.trim();
-
-    // Append user message
-    setMessages((prev) => [...prev, { type: "user", text: userMessage }]);
     setInput("");
-    setIsTyping(true);
+
+    // Add user message and ensure typing bubble
+    setMessages((prev) => {
+      const next = [...prev, { type: "user", text: userMessage }];
+      const hasTyping = next.some((m) => m.type === "bot" && m.isTyping);
+      return hasTyping
+        ? next
+        : [...next, { type: "bot", text: "", isTyping: true }];
+    });
 
     try {
       const res = await fetch(`${API_BASE}${API_AI_CHAT}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, userId: "demo_user" }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: userMessage, userId }),
       });
 
       if (!res.ok) throw new Error("Failed to fetch");
@@ -33,21 +118,22 @@ const ChatBox = ({ onData }) => {
       const chatMessage = json.ChatMessage ?? "Sorry, no reply.";
       const data = json.Data ?? [];
 
-      // Simulate typing delay
-      setTimeout(() => {
-        setIsTyping(false);
-        setMessages((prev) => [...prev, { type: "bot", text: chatMessage }]);
-
-        // Pass the expense data back to parent
-        if (onData) onData(data);
-      }, 1000);
-    } catch (error) {
-      setIsTyping(false);
-      setMessages((prev) => [
-        ...prev,
-        { type: "bot", text: "Sorry, something went wrong. Please try again." },
-      ]);
-      if (onData) onData([]);
+      clearTimeout(typingTimeoutRef.current);
+      typeMessage(chatMessage);
+      onData?.(data);
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.type === "bot" && m.isTyping
+            ? {
+                ...m,
+                text: "Sorry, something went wrong. Please try again.",
+                isTyping: false,
+              }
+            : m
+        )
+      );
+      onData?.([]);
     }
   };
 
@@ -79,26 +165,21 @@ const ChatBox = ({ onData }) => {
                 msg.type === "bot"
                   ? "bg-white/20 text-white"
                   : `bg-gradient-to-r ${theme.gradientchat} text-white`
-              }`}
+              } ${msg.isTyping ? "italic opacity-70" : ""}`}
             >
-              {msg.text}
+              {msg.isTyping && !msg.text ? (
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-white rounded-full animate-bounce"></span>
+                  <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                </span>
+              ) : (
+                msg.text
+              )}
             </div>
           </div>
         ))}
-
-        {/* Typing Indicator */}
-        {isTyping && (
-          <div className="flex items-end gap-2 justify-start">
-            <div className="flex-shrink-0 bg-white/20 p-2 rounded-full">
-              <Bot size={18} className="text-white" />
-            </div>
-            <div className="flex items-center gap-1 bg-white/20 text-white px-4 py-2 rounded-2xl shadow-md">
-              <span className="w-2 h-2 bg-white rounded-full animate-bounce"></span>
-              <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.2s]"></span>
-              <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.4s]"></span>
-            </div>
-          </div>
-        )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}

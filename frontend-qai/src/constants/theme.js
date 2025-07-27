@@ -45,6 +45,8 @@ const themesalist = {
     gradient: "from-[#2e4e1f] via-[#4c7a3f] to-[#a8c686]",
     gradientchat: "from-[#4c7a3f] to-[#2e4e1f]",
   },
+
+ // { gradient = "from-orange-600 to-pink-600" }
 };
 
 

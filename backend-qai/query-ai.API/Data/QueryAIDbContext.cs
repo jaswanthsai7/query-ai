@@ -12,6 +12,7 @@ namespace query_ai.API.Data
 
         public DbSet<Question> Questions { get; set; }
         public DbSet<Expense> Expenses { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +35,14 @@ namespace query_ai.API.Data
                 // Index for filtering per user & date range
                 e.HasIndex(p => new { p.UserId, p.EntryDate });
             });
+
+            modelBuilder.Entity<User>(u =>
+            {
+                u.ToTable("users");
+                u.HasIndex(x => x.Email).IsUnique(); // Unique email
+                u.HasIndex(x => x.QueryId).IsUnique(); // Ensure QueryId is unique
+            });
+
         }
     }
 }

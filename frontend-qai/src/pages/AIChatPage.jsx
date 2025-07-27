@@ -12,10 +12,6 @@ const AIChatPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    console.log("Data updated:", data);
-  }, [data]);
-
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-128px)] bg-gradient-to-br text-white p-4 gap-4">
       {/* Left Chat Section */}

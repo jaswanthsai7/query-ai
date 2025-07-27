@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using query_ai.API.DTOs;
 using query_ai.API.Services;
 
 namespace query_ai.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/expense")]
     public class ExpensesController : ControllerBase

@@ -23,6 +23,8 @@ import {
 import CustomDropdown from "../components/CustomDropdown";
 import newId from "../features/newId";
 import ShimmerLoader from "../features/ShimmerLoader";
+import theme from "../constants/theme";
+import { useAuth } from "../context/AuthContext";
 
 // API Base & Endpoints
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -31,8 +33,15 @@ const API_CREATE = import.meta.env.VITE_API_CREATE;
 const API_UPDATE = import.meta.env.VITE_API_UPDATE;
 const API_DELETE = import.meta.env.VITE_API_DELETE;
 
-const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
-  const toDateOnly = (d = new Date()) => d.toISOString().slice(0, 10);
+const FillExpenses = () => {
+  const toDateOnly = (d = new Date()) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const { token, userId } = useAuth();
 
   const [formData, setFormData] = useState({
     ExpenseId: newId(),
@@ -42,7 +51,7 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
     CreatedAt: new Date().toISOString(),
     PaymentMethod: "",
     Notes: "",
-    UserId: "demo_user",
+    UserId: userId,
   });
 
   const [expenses, setExpenses] = useState([]);
@@ -74,20 +83,30 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
   ];
 
   // Fetch all expenses
-  const fetchExpenses = (isInitial = false) => {
-    if (isInitial) setInitialLoading(true);
-    else setRightLoading(true);
+  const fetchExpenses = async (isInitial = false) => {
+    try {
+      if (isInitial) setInitialLoading(true);
+      else setRightLoading(true);
 
-    fetch(`${API_BASE}${API_GET_ALL}`, {
-      headers: { "x-user-id": formData.UserId },
-    })
-      .then((res) => res.json())
-      .then((data) => setExpenses(data))
-      .catch((err) => console.error("Error fetching expenses:", err))
-      .finally(() => {
-        setInitialLoading(false);
-        setRightLoading(false);
+      const response = await fetch(`${API_BASE}${API_GET_ALL}`, {
+        headers: {
+          "x-user-id": formData.UserId,
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch expenses: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setExpenses(data);
+    } catch (err) {
+      console.error("Error fetching expenses:", err);
+    } finally {
+      setInitialLoading(false);
+      setRightLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -114,19 +133,27 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
       CreatedAt: new Date().toISOString(),
       PaymentMethod: "",
       Notes: "",
-      UserId: "demo_user",
+      UserId: userId,
     });
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    const payload = { ...formData, Amount: parseFloat(formData.Amount) };
+    const payload = {
+      ...formData,
+      Amount: parseFloat(formData.Amount),
+      EntryDate: toDateOnly(new Date(formData.EntryDate)),
+    };
 
     if (editingId) {
       const res = await fetch(`${API_BASE}${API_UPDATE}/${formData.ExpenseId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-user-id": formData.UserId },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": formData.UserId,
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -140,7 +167,11 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
     } else {
       const res = await fetch(`${API_BASE}${API_CREATE}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-id": formData.UserId },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": formData.UserId,
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -155,22 +186,33 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
   };
 
   const handleEdit = (ExpenseId) => {
-    const exp = expenses.find((e) => e.ExpenseId === ExpenseId);
-    if (!exp) return;
-    setEditingId(ExpenseId);
-    setFormData({
-      ...exp,
-      Amount: String(exp.Amount),
-      EntryDate: exp.EntryDate || toDateOnly(new Date(exp.CreatedAt)),
-      id: exp.id,
-    });
-  };
+  const exp = expenses.find((e) => e.ExpenseId === ExpenseId);
+  if (!exp) return;
+
+  setEditingId(ExpenseId);
+
+  // Always reset first to avoid stale data
+  resetForm();
+
+  setFormData({
+    ...exp,
+    Amount: String(exp.Amount),
+    EntryDate: exp.EntryDate
+      ? exp.EntryDate.slice(0, 10) 
+      : toDateOnly(new Date(exp.CreatedAt)),
+    UserId: userId,
+  });
+};
+
 
   const handleDelete = async (ExpenseId) => {
     setRightLoading(true);
     await fetch(`${API_BASE}${API_DELETE}/${ExpenseId}`, {
       method: "DELETE",
-      headers: { "x-user-id": formData.UserId },
+      headers: {
+        "x-user-id": formData.UserId,
+        Authorization: `Bearer ${token}`,
+      },
     });
     fetchExpenses(false);
     if (editingId === ExpenseId) {
@@ -236,19 +278,27 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                     options={categories}
                     onChange={(val) => setFormData({ ...formData, Category: val })}
                   />
-                  {errors.Category && <p className="text-red-300 text-xs">{errors.Category}</p>}
+                  {errors.Category && (
+                    <p className="text-red-300 text-xs">{errors.Category}</p>
+                  )}
 
                   <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1">Amount (₹)</label>
+                    <label className="block text-sm font-medium text-white/80 mb-1">
+                      Amount (₹)
+                    </label>
                     <input
                       type="text"
                       inputMode="decimal"
                       value={formData.Amount}
-                      onChange={(e) => setFormData({ ...formData, Amount: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, Amount: e.target.value })
+                      }
                       placeholder="Enter Amount"
                       className="w-full px-4 py-2 rounded-full border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition"
                     />
-                    {errors.Amount && <p className="text-red-300 text-xs">{errors.Amount}</p>}
+                    {errors.Amount && (
+                      <p className="text-red-300 text-xs">{errors.Amount}</p>
+                    )}
                   </div>
 
                   <div>
@@ -258,10 +308,14 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                     <input
                       type="date"
                       value={formData.EntryDate}
-                      onChange={(e) => setFormData({ ...formData, EntryDate: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, EntryDate: e.target.value })
+                      }
                       className="w-full px-4 py-2 rounded-full border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition [color-scheme:dark]"
                     />
-                    {errors.EntryDate && <p className="text-red-300 text-xs">{errors.EntryDate}</p>}
+                    {errors.EntryDate && (
+                      <p className="text-red-300 text-xs">{errors.EntryDate}</p>
+                    )}
                   </div>
 
                   <CustomDropdown
@@ -269,7 +323,9 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                     icon={CreditCard}
                     value={formData.PaymentMethod}
                     options={paymentMethods}
-                    onChange={(val) => setFormData({ ...formData, PaymentMethod: val })}
+                    onChange={(val) =>
+                      setFormData({ ...formData, PaymentMethod: val })
+                    }
                   />
 
                   <div>
@@ -278,7 +334,9 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                     </label>
                     <textarea
                       value={formData.Notes}
-                      onChange={(e) => setFormData({ ...formData, Notes: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, Notes: e.target.value })
+                      }
                       placeholder="Add details..."
                       rows="2"
                       className="w-full px-4 py-2 rounded-2xl border border-white/40 bg-white/10 text-white placeholder-white/70 focus:ring-2 focus:ring-orange-400 outline-none transition"
@@ -288,7 +346,7 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
               </div>
               <button
                 type="submit"
-                className={`mt-4 w-full py-2 rounded-full font-semibold text-white bg-gradient-to-r ${gradient} shadow-lg hover:scale-105 transition-transform duration-300`}
+                className={`mt-4 w-full py-2 rounded-full font-semibold text-white bg-gradient-to-r ${theme.gradientchat} shadow-lg hover:scale-105 transition-transform duration-300`}
               >
                 {editingId ? "Update Expense" : "Add Expense"}
               </button>
@@ -299,7 +357,9 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
         {/* RIGHT GRID + CHART */}
         <div className="w-full md:w-2/3 bg-white/15 backdrop-blur-md rounded-3xl shadow-lg p-4 md:p-6 border border-white/30 hover:shadow-2xl transition flex flex-col">
           <h2 className="text-2xl font-bold text-white mb-4">Expense Breakdown</h2>
-          <div className="text-right text-white font-bold mt-4 ml-4">Total: ₹{totalExpense}</div>
+          <div className="text-right text-white font-bold mt-4 ml-4">
+            Total: ₹{totalExpense}
+          </div>
           {(initialLoading || rightLoading) ? (
             <div className="space-y-4">
               <ShimmerLoader className="h-6 w-1/3" />
@@ -312,9 +372,19 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
               <div className="w-full md:w-1/3 h-40">
                 <ResponsiveContainer>
                   <PieChart>
-                    <Pie data={chartData} cx="50%" cy="50%" labelLine={false} outerRadius={50} dataKey="value">
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={50}
+                      dataKey="value"
+                    >
                       {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -322,21 +392,43 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                 </ResponsiveContainer>
               </div>
               <div className="w-full md:w-2/3 bg-white/15 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-4">
-                <h2 className="text-lg font-semibold text-white mb-4">Expense Trend</h2>
+                <h2 className="text-lg font-semibold text-white mb-4">
+                  Expense Trend
+                </h2>
                 <div className="h-20">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trendData}>
                       <defs>
                         <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#fb7185" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#fb7185" stopOpacity={0.1} />
+                          <stop
+                            offset="95%"
+                            stopColor="#fb7185"
+                            stopOpacity={0.1}
+                          />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="rgba(255,255,255,0.08)"
+                      />
                       <XAxis dataKey="date" stroke="#ffffff90" />
                       <YAxis stroke="#ffffff90" />
-                      <Tooltip contentStyle={{ background: "rgba(0,0,0,0.6)", borderRadius: 8, color: "#fff" }} />
-                      <Area type="monotone" dataKey="total" stroke="#fb7185" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(0,0,0,0.6)",
+                          borderRadius: 8,
+                          color: "#fff",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#fb7185"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorTotal)"
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -352,11 +444,16 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
               ))}
             </div>
           ) : expenses.length === 0 ? (
-            <p className="text-white/70 text-center py-10">No expenses added yet.</p>
+            <p className="text-white/70 text-center py-10">
+              No expenses added yet.
+            </p>
           ) : (
             <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
               {expenses.map((exp) => (
-                <div key={exp.ExpenseId} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white/10 rounded-2xl shadow-md">
+                <div
+                  key={exp.ExpenseId}
+                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white/10 rounded-2xl shadow-md"
+                >
                   <div>
                     <p className="text-white font-semibold">{exp.Category}</p>
                     <p className="text-white/70 text-sm">{exp.Notes}</p>
@@ -368,10 +465,18 @@ const FillExpenses = ({ gradient = "from-orange-600 to-pink-600" }) => {
                   </div>
                   <div className="flex items-center gap-3 mt-2 sm:mt-0">
                     <p className="text-white font-bold">₹{exp.Amount}</p>
-                    <button onClick={() => handleEdit(exp.ExpenseId)} className="text-white/70 hover:text-white" title="Edit">
+                    <button
+                      onClick={() => handleEdit(exp.ExpenseId)}
+                      className="text-white/70 hover:text-white"
+                      title="Edit"
+                    >
                       <Edit3 size={18} />
                     </button>
-                    <button onClick={() => handleDelete(exp.ExpenseId)} className="text-red-400 hover:text-red-300" title="Delete">
+                    <button
+                      onClick={() => handleDelete(exp.ExpenseId)}
+                      className="text-red-400 hover:text-red-300"
+                      title="Delete"
+                    >
                       <Trash2 size={18} />
                     </button>
                   </div>
