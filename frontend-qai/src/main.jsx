@@ -14,3 +14,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </AuthProvider>
   </React.StrictMode>
 );
+
+// Remove splash screen as soon as React mounts
+const splash = document.getElementById("splash-screen");
+if (splash) {
+  splash.classList.add("fade-out");
+  setTimeout(() => splash.remove(), 500);
+}
