@@ -186,23 +186,23 @@ const FillExpenses = () => {
   };
 
   const handleEdit = (ExpenseId) => {
-  const exp = expenses.find((e) => e.ExpenseId === ExpenseId);
-  if (!exp) return;
+    const exp = expenses.find((e) => e.ExpenseId === ExpenseId);
+    if (!exp) return;
 
-  setEditingId(ExpenseId);
+    setEditingId(ExpenseId);
 
-  // Always reset first to avoid stale data
-  resetForm();
+    // Always reset first to avoid stale data
+    resetForm();
 
-  setFormData({
-    ...exp,
-    Amount: String(exp.Amount),
-    EntryDate: exp.EntryDate
-      ? exp.EntryDate.slice(0, 10) 
-      : toDateOnly(new Date(exp.CreatedAt)),
-    UserId: userId,
-  });
-};
+    setFormData({
+      ...exp,
+      Amount: String(exp.Amount),
+      EntryDate: exp.EntryDate
+        ? exp.EntryDate.slice(0, 10)
+        : toDateOnly(new Date(exp.CreatedAt)),
+      UserId: userId,
+    });
+  };
 
 
   const handleDelete = async (ExpenseId) => {
