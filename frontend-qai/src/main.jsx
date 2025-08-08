@@ -4,20 +4,16 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
+import SplashScreen from "./components/SplashScreen";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter>
-        <App />
+        <SplashScreen>
+          <App />
+        </SplashScreen>
       </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>
 );
-
-// Remove splash screen as soon as React mounts
-const splash = document.getElementById("splash-screen");
-if (splash) {
-  splash.classList.add("fade-out");
-  setTimeout(() => splash.remove(), 400);
-}
