@@ -144,13 +144,13 @@ export const AuthProvider = ({ children }) => {
     [auth, login, logout]
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-sm text-gray-600">
-        Checking authentication...
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen text-sm text-gray-600">
+  //       Checking authentication...
+  //     </div>
+  //   );
+  // }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
