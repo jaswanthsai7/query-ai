@@ -1,3 +1,5 @@
+"use client";
+
 import {
   PieChart,
   Pie,
@@ -16,7 +18,7 @@ import {
   Legend,
 } from "recharts";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import theme from "../constants/theme";
+import theme from "@/constants/theme";
 
 /* ----------------- MAIN COMPONENT ----------------- */
 const SpendAnalysis = () => {

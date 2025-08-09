@@ -1,11 +1,12 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { Send, Bot } from "lucide-react";
-import theme from "../constants/theme";
-import { useAuth } from "../context/AuthContext";
-import apiTrailRemover from "../features/apiTrailRemover";
+import { useAuth } from "@/context/authContext";
+import theme from "@/constants/theme";
+import apiTrailRemover from "@/utils/apiTrailRemover";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-const API_AI_CHAT = import.meta.env.VITE_API_AI_CHAT;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_AI_CHAT = process.env.NEXT_PUBLIC_API_AI_CHAT;
 
 const ChatBox = ({ onData }) => {
   const { token, userId } = useAuth();
@@ -89,7 +90,7 @@ const ChatBox = ({ onData }) => {
   }, []);
 
   /** Send user message */
-  const sendMessage = async () => {
+ const sendMessage = async () => {
     if (!input.trim()) return;
     const userMessage = input.trim();
     setInput("");
@@ -196,7 +197,8 @@ const ChatBox = ({ onData }) => {
           }}
         />
         <button
-          onClick={sendMessage}
+          onClick={() => { sendMessage(); }}
+          disabled={!input.trim()}
           className={`flex items-center justify-center px-4 py-3 rounded-full bg-gradient-to-r ${theme.gradientchat} hover:opacity-90 shadow-lg transition transform hover:scale-105`}
         >
           <Send size={20} />

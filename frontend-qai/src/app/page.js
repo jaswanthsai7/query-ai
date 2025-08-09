@@ -1,9 +1,11 @@
+"use client";
+
+import theme from "@/constants/theme";
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import theme from "../constants/theme";
+import { useRouter } from "next/navigation";
 
 export default function Hero() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
   const [displayText, setDisplayText] = useState("");
@@ -13,17 +15,17 @@ export default function Hero() {
 
   useEffect(() => {
     const heroTimer = setTimeout(() => setLoading(false), 1000);
-    const redirectTimer = setTimeout(() => {
-      setRedirecting(true);
-      setTimeout(() => navigate("/AIChatPage"), 800);
-    }, 5000);
+    // const redirectTimer = setTimeout(() => {
+    //   setRedirecting(true);
+    //   setTimeout(() => router.push("/AIChatPage"), 800);
+    // }, 5000);
 
     return () => {
       clearTimeout(heroTimer);
-      clearTimeout(redirectTimer);
+      //clearTimeout(redirectTimer);
       if (typingRef.current) clearInterval(typingRef.current);
     };
-  }, [navigate]);
+  }, [router]);
 
   useEffect(() => {
     if (!loading) {
@@ -51,7 +53,9 @@ export default function Hero() {
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center h-screen bg-gradient-to-br ${theme.gradient}`}>
+      <div
+        className={`flex items-center justify-center h-screen bg-gradient-to-br ${theme.gradient}`}
+      >
         <div className="loader-custom"></div>
       </div>
     );
@@ -83,14 +87,16 @@ export default function Hero() {
           <span className="animate-blink">|</span>
         </h1>
 
-        <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed 
+        <p
+          className="mt-6 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed 
   bg-gradient-to-r from-purple-200 via-pink-200 to-blue-200
-  bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(255,255,255,0.3)]
-">
-          QueryAI is your intelligent data assistant, combining AI-powered SQL generation,
-          real-time analysis, and interactive visualizations. With Gemini integration,
-          it helps you explore datasets, uncover trends, and turn raw numbers into actionable insights
-          — all with a single query.
+  bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(255,255,255,0.3)]"
+        >
+          QueryAI is your intelligent data assistant, combining AI-powered SQL
+          generation, real-time analysis, and interactive visualizations. With
+          Gemini integration, it helps you explore datasets, uncover trends,
+          and turn raw numbers into actionable insights — all with a single
+          query.
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">

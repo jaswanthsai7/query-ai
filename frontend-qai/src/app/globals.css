@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,9 +13,21 @@
   --text-dim: #6b7280;
   --accent: #ff5a3d; /* Jeton-like orange */
   --accent-foreground: #ffffff;
- --from: #ff5a3d;
+ /* --from: #ff5a3d;
   --via: #ec4899;
-  --to: #ef4444;
+  --to: #ef4444;  */
+  --from: #1a2a6c;
+  --via: #b21f1f;
+  --to: #fdbb2d;
+}
+
+.bg-gradient-custom {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--from),
+    var(--via),
+    var(--to)
+  );
 }
 
 /* Neon theme */

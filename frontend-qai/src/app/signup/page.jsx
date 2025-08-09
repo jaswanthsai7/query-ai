@@ -1,15 +1,19 @@
+"use client";
+
 import React, { useState } from "react";
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
-import FullScreenBG from "../components/FullScreenBG";
-import AuthCard from "../components/AuthCard";
-import theme from "../constants/theme";
-import { signUp } from "../actions/auth";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/context/authContext";
+import FullScreenBG from "@/components/FullScreenBG";
+import AuthCard from "@/components/AuthCard";
+import theme from "@/constants/theme";
+import { signUp } from "@/services/authService"; // import your signUp API function
 
 export default function SignUp() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { login } = useAuth();
+
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -25,16 +29,16 @@ export default function SignUp() {
     if (!form.name) newErrors.name = "Name is required.";
     if (!form.email) newErrors.email = "Email is required.";
     if (!form.password) newErrors.password = "Password is required.";
-    if (form.password !== form.confirmPassword) newErrors.confirmPassword = "Passwords do not match.";
+    if (form.password !== form.confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match.";
     setErrors(newErrors);
     if (Object.keys(newErrors).length) return;
 
     try {
       setLoading(true);
       const data = await signUp({ name: form.name, email: form.email, password: form.password });
-
       login({ token: data.token, user: data.user });
-      navigate("/");
+      router.push("/");
     } catch (err) {
       setServerError(err.message || "Registration failed");
     } finally {
@@ -96,6 +100,7 @@ export default function SignUp() {
                 type="button"
                 onClick={() => setShowPwd((p) => !p)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+                aria-label={showPwd ? "Hide password" : "Show password"}
               >
                 {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -118,6 +123,7 @@ export default function SignUp() {
                 type="button"
                 onClick={() => setShowConfirmPwd((p) => !p)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+                aria-label={showConfirmPwd ? "Hide password" : "Show password"}
               >
                 {showConfirmPwd ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -131,7 +137,9 @@ export default function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className={`mt-2 w-full py-2 rounded-full font-semibold text-white bg-gradient-to-r ${theme.gradientchat} shadow-lg hover:scale-105 transition-transform duration-300 flex items-center justify-center gap-2`}
+            className={`mt-2 w-full py-2 rounded-full font-semibold text-white bg-gradient-to-r ${theme.gradientchat} shadow-lg hover:scale-105 transition-transform duration-300 flex items-center justify-center gap-2 ${
+              loading ? "cursor-not-allowed opacity-70" : ""
+            }`}
           >
             {loading && <Loader2 size={18} className="animate-spin" />}
             Sign Up
@@ -139,7 +147,7 @@ export default function SignUp() {
 
           <p className="text-center text-white/70 text-sm">
             Already have an account?{" "}
-            <Link to="/signin" className="text-white hover:underline font-semibold">
+            <Link href="/signin" className="text-white hover:underline font-semibold">
               Sign In
             </Link>
           </p>

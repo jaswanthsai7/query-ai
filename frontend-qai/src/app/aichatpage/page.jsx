@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
-import ChatBox from "../components/ChatBox";
-import TableGrid from "../components/TableGrid";
-import ShimmerLoader from "../features/ShimmerLoader";
 
-const AIChatPage = () => {
+
+"use client"; 
+
+import { useState, useEffect } from "react";
+import ChatBox from "@/components/ChatBox";
+import TableGrid from "@/components/TableGrid";
+import ShimmerLoader from "@/features/ShimmerLoader";
+
+export default function AIChatPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]); // Expense data for the grid
 
@@ -41,6 +45,4 @@ const AIChatPage = () => {
       </div>
     </div>
   );
-};
-
-export default AIChatPage;
+}

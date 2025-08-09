@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173", "https://query-ai-812b.onrender.com", "https://query-ai-green.vercel.app")
+            policy.WithOrigins("http://localhost:5173", "https://query-ai-812b.onrender.com", "https://query-ai-green.vercel.app", "http://localhost:3000")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();

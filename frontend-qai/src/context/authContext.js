@@ -1,3 +1,6 @@
+"use client";
+
+import { signIn } from "@/services/authService";
 import React, {
   createContext,
   useContext,
@@ -6,8 +9,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-// Prefer an API client callable from the browser instead of a server action import
-import { signIn } from "../actions/auth";
+
 
 const DEMO_CREDENTIALS = {
   email: "guest@demo.com",
@@ -142,7 +144,13 @@ export const AuthProvider = ({ children }) => {
     [auth, login, logout]
   );
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-sm text-gray-600">
+        Checking authentication...
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,3 +1,5 @@
+"use client"; // mark this as client component if using app directory
+
 import { useState, useMemo, useEffect } from "react";
 import {
   PieChart,
@@ -20,19 +22,19 @@ import {
   Edit3,
   Trash2,
 } from "lucide-react";
-import CustomDropdown from "../components/CustomDropdown";
-import newId from "../features/newId";
-import ShimmerLoader from "../features/ShimmerLoader";
-import theme from "../constants/theme";
-import { useAuth } from "../context/AuthContext";
-import apiTrailRemover from "../features/apiTrailRemover";
+import { useAuth } from "@/context/authContext";
+import apiTrailRemover from "@/utils/apiTrailRemover";
+import newId from "@/utils/newId";
+import ShimmerLoader from "@/features/ShimmerLoader";
+import CustomDropdown from "@/features/CustomDropdown";
+import theme from "@/constants/theme";
 
-// API Base & Endpoints
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-const API_GET_ALL = import.meta.env.VITE_API_GET_ALL;
-const API_CREATE = import.meta.env.VITE_API_CREATE;
-const API_UPDATE = import.meta.env.VITE_API_UPDATE;
-const API_DELETE = import.meta.env.VITE_API_DELETE;
+// Next.js env vars must start with NEXT_PUBLIC_ to be accessible in client-side code
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_GET_ALL = process.env.NEXT_PUBLIC_API_GET_ALL;
+const API_CREATE = process.env.NEXT_PUBLIC_API_CREATE;
+const API_UPDATE = process.env.NEXT_PUBLIC_API_UPDATE;
+const API_DELETE = process.env.NEXT_PUBLIC_API_DELETE;
 
 const FillExpenses = () => {
   const toDateOnly = (d = new Date()) => {
@@ -111,8 +113,8 @@ const FillExpenses = () => {
   };
 
   useEffect(() => {
-    fetchExpenses(true);
-  }, []);
+    if (userId && token) fetchExpenses(true);
+  }, [userId, token]); // fetch after userId and token are ready
 
   const validate = () => {
     const errs = {};
@@ -148,15 +150,18 @@ const FillExpenses = () => {
     };
 
     if (editingId) {
-      const res = await fetch(apiTrailRemover(API_BASE, API_UPDATE + "/" + formData.ExpenseId), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": formData.UserId,
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        apiTrailRemover(API_BASE, API_UPDATE + "/" + formData.ExpenseId),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": formData.UserId,
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (res.ok) {
         fetchExpenses(false);
@@ -205,20 +210,35 @@ const FillExpenses = () => {
     });
   };
 
-
   const handleDelete = async (ExpenseId) => {
     setRightLoading(true);
-    await fetch(apiTrailRemover(API_BASE, API_DELETE + `/${ExpenseId}`), {
-      method: "DELETE",
-      headers: {
-        "x-user-id": formData.UserId,
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    fetchExpenses(false);
-    if (editingId === ExpenseId) {
-      setEditingId(null);
-      resetForm();
+    try {
+      const res = await fetch(
+        apiTrailRemover(API_BASE, API_DELETE + `/${ExpenseId}`),
+        {
+          method: "DELETE",
+          headers: {
+            "x-user-id": formData.UserId,
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        alert("Failed to delete expense");
+        return;
+      }
+
+      await fetchExpenses(false);
+      if (editingId === ExpenseId) {
+        setEditingId(null);
+        resetForm();
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error deleting expense");
+    } finally {
+      setRightLoading(false);
     }
   };
 
